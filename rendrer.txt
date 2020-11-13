@@ -1,0 +1,44 @@
+
+guide on how to get the color from the generated header file and use it in bootloader...
+
+//data start
+
+struct fb_info {
+	uint8_t  type;
+	uint8_t  bpp;
+	size_t  *addr; /* 64-bit field in the specification */
+	size_t   width;
+	size_t   height;
+	size_t   pitch;
+};
+
+//data end
+
+
+// code start
+	clear_screen();	//firstly clear the screen
+
+	struct fb_info *fbi = get_fb_info();	//this one get the info of framebuffer address, height , width stored in the structure
+	size_t pad_cols = 0;
+	size_t pad_rows = 0;
+
+	if ((fbi->width - PPM_COLS) > 0) {
+		if ((fbi->height - PPM_ROWS) > 0) {
+			pad_cols = (fbi->width  / 2) - (PPM_COLS / 2);
+			pad_rows = (fbi->height / 2) - (PPM_ROWS / 2);
+		}
+	}
+
+	for (int prows = 0; prows < PPM_ROWS; prows++) {
+		for (int pcols = 0; pcols < PPM_COLS; pcols++) {
+
+			size_t pos = ((prows * PPM_COLS) + pcols) * 3;
+			size_t ci  = ((ppm_array[pos]   << 16) & 0xff0000) |
+				     ((ppm_array[pos+1] << 8)  & 0xff00)   |
+				      (ppm_array[pos+2]        & 0xff);
+
+			draw_pixel(pad_rows + prows, pad_cols + pcols, ci);	//must have this function with input(x,y,color)
+		}
+	}
+
+//end
